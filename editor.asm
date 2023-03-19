@@ -11,12 +11,6 @@ err_tcsetattr:
 	db			"tcsetattr", 0
 err_tcgetattr:
 	db			"tcgetattr", 0
-output1:
-	db			"%d", 0xd, 0xa, 0
-output2:
-	db			"%d ('%c')", 0xd, 0xa, 0
-intro:
-	db			"Type from your keyboard. Press CTRL + q to exit.", 0xd, 0xa, 0
 
 struc TERMIOS
 	c_iflag: resd 1
@@ -52,7 +46,6 @@ input_char:
 	section		.text
 
 main:
-	print		intro
 	get_termios	orig_termios
 	get_termios	raw_termios
 
@@ -101,7 +94,18 @@ main:
 	;end of enable raw mode
 
 main_loop:
-	mov			[input_char], byte 0
+	call		process_key
+	mov			r15, rax
+
+	mov			rdi, [char_quit]
+	call		check_ctrl_key
+	cmp			rax, r15
+	je			disable_raw
+
+	jmp			main_loop
+
+;process key
+process_key:
 	mov			rdi, STDIN_FILENO
 	mov			rsi, input_char
 	mov			rdx, 1
@@ -109,34 +113,13 @@ main_loop:
 	mov			rdi, err_read
 	cmp			rax, -1
 	je			call_die
+	cmp			rax, 1
+	jne			process_key
+	mov			rax, [input_char]
+	ret
+;end of process key
 
-	mov			rdi, [input_char]
-	call		iscntrl
-	cmp			rax, 0
-	je			isnotctrl
-
-	cmp			byte [input_char], 0
-	je			ender
-
-	mov			rsi, [input_char]
-	print		output1
-
-ender:
-	mov			rdi, [char_quit]
-	call		check_ctrl_key
-	cmp			rax, [input_char]
-	je			break
-
-	jmp			main_loop
-
-isnotctrl:
-	mov			rdx, [input_char]
-	mov			rsi, [input_char]
-	print		output2
-
-	jmp			ender	
-
-break:
+disable_raw:
 	set_termios	orig_termios
 	mov			rdi, 0
 	call		exit
