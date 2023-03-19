@@ -1,6 +1,6 @@
 AS := nasm
 
-BIN    := editor
+BIN    := patnugot
 SRC    := $(wildcard *.asm)
 OBJ    := ${SRC:%.asm=%.o}
 
