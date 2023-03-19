@@ -1,7 +1,7 @@
 %include "include.inc"
 
 	global		main
-	extern		printf, perror, tcsetattr, tcgetattr, read, iscntrl, die, exit, check_ctrl_key
+	extern		printf, write, perror, tcsetattr, tcgetattr, read, iscntrl, die, exit, check_ctrl_key
 
 	section		.data
 
@@ -35,6 +35,9 @@ raw_termios: istruc TERMIOS
 	at c_lflag, dd 0
 	at c_cc, db ""
 iend
+
+ref_str:
+	db			`\x1b[2J`
 
 char_quit:
 	dd			'q'
@@ -94,13 +97,8 @@ main:
 	;end of enable raw mode
 
 main_loop:
+	call		refresh
 	call		process_key
-	mov			r15, rax
-
-	mov			rdi, [char_quit]
-	call		check_ctrl_key
-	cmp			rax, r15
-	je			disable_raw
 
 	jmp			main_loop
 
@@ -116,8 +114,24 @@ process_key:
 	cmp			rax, 1
 	jne			process_key
 	mov			rax, [input_char]
+	mov			r15, rax
+	call		read_key
 	ret
 ;end of process key
+
+read_key:
+	mov			rdi, [char_quit]
+	call		check_ctrl_key
+	cmp			rax, r15
+	je			disable_raw
+	ret
+
+refresh:
+	mov			rdi, STDOUT_FILENO
+	mov			rsi, ref_str
+	mov			rdx, 4
+	call		write
+	ret
 
 disable_raw:
 	set_termios	orig_termios

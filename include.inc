@@ -1,4 +1,5 @@
 %define STDIN_FILENO 0
+%define STDOUT_FILENO 1
 %define TCSAFLUSH 2
 %define VMIN 6
 %define VTIME 5
