@@ -1,7 +1,7 @@
 %include "include.inc"
 
 	global		main
-	extern		printf, write, perror, tcsetattr, tcgetattr, read, iscntrl, die, exit, check_ctrl_key
+	extern		printf, write, perror, tcsetattr, tcgetattr, read, iscntrl
 
 	section		.data
 
@@ -40,7 +40,8 @@ ref_str:
 	db			`\x1b[2J`
 tp_str:
 	db			`\x1b[H`
-
+ctrl_check:
+	dd			0x1f
 char_quit:
 	dd			'q'
 
@@ -129,14 +130,36 @@ read_key:
 	ret
 
 refresh:
+	call		clear_screen
+	ret
+
+clear_screen:
 	wrt			ref_str, 4 ;clear screen
 	wrt			tp_str, 3 ;set cursor position to top-left corner
 	ret
 
 disable_raw:
 	set_termios	orig_termios
+	call		clear_screen
 	mov			rdi, 0
 	call		exit
 
 call_die:
 	call		die
+
+die:
+	call		clear_screen
+	call		perror
+	mov			rdi, 1
+	call		exit
+	ret
+
+exit:
+	mov			rax, 0x3c
+	syscall
+	ret
+
+check_ctrl_key:
+	and			rdi, [ctrl_check]
+	mov			rax, rdi
+	ret
