@@ -38,6 +38,8 @@ iend
 
 ref_str:
 	db			`\x1b[2J`
+tp_str:
+	db			`\x1b[H`
 
 char_quit:
 	dd			'q'
@@ -127,10 +129,8 @@ read_key:
 	ret
 
 refresh:
-	mov			rdi, STDOUT_FILENO
-	mov			rsi, ref_str
-	mov			rdx, 4
-	call		write
+	wrt			ref_str, 4 ;clear screen
+	wrt			tp_str, 3 ;set cursor position to top-left corner
 	ret
 
 disable_raw:

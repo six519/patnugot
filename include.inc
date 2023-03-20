@@ -39,3 +39,11 @@
 	xor			rax, rax
 	call		printf
 %endmacro
+
+%macro wrt 2
+	;write
+	mov			rdi, STDOUT_FILENO
+	mov			rsi, %1
+	mov			rdx, %2
+	call		write
+%endmacro
