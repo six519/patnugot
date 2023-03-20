@@ -84,6 +84,8 @@ raw_termios: istruc TERMIOS
 	at c_cc, db ""
 iend
 
+tilde:
+	db			"~", 0xd, 0xa, 0
 ref_str:
 	db			`\x1b[2J`
 tp_str:
@@ -177,8 +179,19 @@ read_key:
 	je			disable_raw
 	ret
 
+draw_rows:
+	mov			r12, 0
+draw_loop:	
+	wrt			tilde, 3
+	inc			r12
+	cmp			r12, 24
+	jne			draw_loop
+	ret
+
 refresh:
 	call		clear_screen
+	call		draw_rows
+	wrt			tp_str, 3
 	ret
 
 clear_screen:
