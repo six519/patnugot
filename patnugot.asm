@@ -21,7 +21,7 @@
 	call		tcgetattr
 	mov			rdi, err_tcgetattr
 	cmp			rax, -1
-	je			call_die
+	je			call_terminate
 %endmacro
 
 %macro set_termios 1
@@ -31,7 +31,7 @@
 	call		tcsetattr
 	mov			rdi, err_tcsetattr
 	cmp			rax, -1
-	je			call_die
+	je			call_terminate
 %endmacro
 
 %macro print 1
@@ -48,8 +48,8 @@
 	call		write
 %endmacro
 
-	global		main
-	extern		printf, write, perror, tcsetattr, tcgetattr, read, iscntrl
+	global		main, terminate
+	extern		printf, write, perror, tcsetattr, tcgetattr, read, iscntrl, read_key
 
 	section		.data
 
@@ -157,22 +157,8 @@ main_loop:
 
 ;process key
 process_key:
-	mov			rdi, STDIN_FILENO
-	mov			rsi, input_char
-	mov			rdx, 1
-	call		read
-	mov			rdi, err_read
-	cmp			rax, -1
-	je			call_die
-	cmp			rax, 1
-	jne			process_key
-	mov			rax, [input_char]
-	mov			r15, rax
 	call		read_key
-	ret
-;end of process key
-
-read_key:
+	mov			r15, rax
 	mov			rdi, [char_quit]
 	call		check_ctrl_key
 	cmp			rax, r15
@@ -205,10 +191,10 @@ disable_raw:
 	mov			rdi, 0
 	call		exit
 
-call_die:
-	call		die
+call_terminate:
+	call		terminate
 
-die:
+terminate:
 	call		clear_screen
 	call		perror
 	mov			rdi, 1
