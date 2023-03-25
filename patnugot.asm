@@ -53,8 +53,6 @@
 
 	section		.data
 
-err_read:
-	db			"read", 0
 err_tcsetattr:
 	db			"tcsetattr", 0
 err_tcgetattr:
