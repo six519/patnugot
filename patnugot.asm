@@ -16,6 +16,7 @@
 %define ISIG 0x1
 %define SYS_WRITE 1
 %define SYS_IOCTL 16
+%define TIOCGWINSZ 0x5413
 
 %macro get_termios 1
 	mov			rdi, STDIN_FILENO
@@ -62,16 +63,6 @@ err_tcgetattr:
 	db			"tcgetattr", 0
 err_get_window_size:
 	db			"get_window_size", 0
-
-struc ECONFIG
-	screen_rows: resw 1
-	screen_cols: resw 1
-endstruc
-
-econfig: istruc ECONFIG
-	at screen_rows, dw 0
-	at screen_cols, dw 0
-iend
 
 struc TERMIOS
 	c_iflag: resd 1
@@ -236,7 +227,16 @@ init_editor:
 	ret
 
 get_window_size:
-
+	mov			rax, SYS_IOCTL
+	mov			rdi, STDOUT_FILENO
+	mov			rsi, TIOCGWINSZ
+	mov			rdx, wsize
+	syscall
+	cmp			rax, -1
+	je			gws_err
+	mov			r10, [wsize+2]
+	cmp			r10, 0
+	je			gws_err
 
 	jmp			gws_ok
 gws_err:
