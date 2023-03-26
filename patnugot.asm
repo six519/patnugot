@@ -14,6 +14,8 @@
 %define ICANON 0x2
 %define IEXTEN 0x8000
 %define ISIG 0x1
+%define SYS_WRITE 1
+%define SYS_IOCTL 16
 
 %macro get_termios 1
 	mov			rdi, STDIN_FILENO
@@ -42,14 +44,15 @@
 
 %macro wrt 2
 	;write
+	mov			rax, SYS_WRITE
 	mov			rdi, STDOUT_FILENO
 	mov			rsi, %1
 	mov			rdx, %2
-	call		write
+	syscall
 %endmacro
 
 	global		main, terminate
-	extern		printf, write, perror, tcsetattr, tcgetattr, read, iscntrl, read_key
+	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key
 
 	section		.data
 
