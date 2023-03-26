@@ -60,6 +60,18 @@ err_tcsetattr:
 	db			"tcsetattr", 0
 err_tcgetattr:
 	db			"tcgetattr", 0
+err_get_window_size:
+	db			"get_window_size", 0
+
+struc ECONFIG
+	screen_rows: resw 1
+	screen_cols: resw 1
+endstruc
+
+econfig: istruc ECONFIG
+	at screen_rows, dw 0
+	at screen_cols, dw 0
+iend
 
 struc TERMIOS
 	c_iflag: resd 1
@@ -99,6 +111,8 @@ char_quit:
 	section		.bss
 input_char:
 	resb		1
+wsize:
+	resw		4
 
 	section		.text
 
@@ -149,6 +163,8 @@ main:
 
 	set_termios	raw_termios
 	;end of enable raw mode
+
+	call		init_editor
 
 main_loop:
 	call		refresh
@@ -210,4 +226,23 @@ exit:
 check_ctrl_key:
 	and			rdi, [ctrl_check]
 	mov			rax, rdi
+	ret
+
+init_editor:
+	call		get_window_size
+	mov			rdi, err_get_window_size
+	cmp			rax, -1
+	je			call_terminate
+	ret
+
+get_window_size:
+
+
+	jmp			gws_ok
+gws_err:
+	mov			rax, -1
+	jmp			gws_end
+gws_ok:
+	mov			rax, 0
+gws_end:
 	ret
