@@ -15,8 +15,6 @@
 %define IEXTEN 0x8000
 %define ISIG 0x1
 %define SYS_WRITE 1
-%define SYS_IOCTL 16
-%define TIOCGWINSZ 0x5413
 
 %macro get_termios 1
 	mov			rdi, STDIN_FILENO
@@ -53,7 +51,7 @@
 %endmacro
 
 	global		main, terminate
-	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key
+	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size
 
 	section		.data
 
@@ -63,6 +61,8 @@ err_tcgetattr:
 	db			"tcgetattr", 0
 err_get_window_size:
 	db			"get_window_size", 0
+test:
+	db			"The value is: %d", 0xa, 0
 
 struc TERMIOS
 	c_iflag: resd 1
@@ -89,7 +89,9 @@ raw_termios: istruc TERMIOS
 iend
 
 tilde:
-	db			"~", 0xd, 0xa, 0
+	db			"~", 0
+newline:
+	db			0xd, 0xa, 0
 ref_str:
 	db			`\x1b[2J`
 tp_str:
@@ -102,7 +104,9 @@ char_quit:
 	section		.bss
 input_char:
 	resb		1
-wsize:
+screen_rows:
+	resw		4
+screen_cols:
 	resw		4
 
 	section		.text
@@ -175,10 +179,17 @@ process_key:
 
 draw_rows:
 	mov			r12, 0
+	mov			r13, [screen_rows]
 draw_loop:	
-	wrt			tilde, 3
+	wrt			tilde, 1
 	inc			r12
-	cmp			r12, 24
+
+	cmp			r12, r13
+	je			dr_cont
+	wrt			newline, 2
+
+dr_cont:
+	cmp			r12, r13
 	jne			draw_loop
 	ret
 
@@ -227,14 +238,12 @@ init_editor:
 	ret
 
 get_window_size:
-	mov			rax, SYS_IOCTL
-	mov			rdi, STDOUT_FILENO
-	mov			rsi, TIOCGWINSZ
-	mov			rdx, wsize
-	syscall
+	mov			rdi, screen_rows
+	mov			rsi, screen_cols
+	call		get_size
 	cmp			rax, -1
 	je			gws_err
-	mov			r10, [wsize+2]
+	mov			r10, [screen_cols]
 	cmp			r10, 0
 	je			gws_err
 
