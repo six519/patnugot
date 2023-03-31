@@ -50,6 +50,25 @@
 	syscall
 %endmacro
 
+%macro abuff 1
+	mov			r14, %1
+	mov			[r10 + r11], r14
+	inc			r11
+%endmacro
+
+%macro ref_mac 0
+	abuff		[prefix_char]
+	abuff		[open_brace_char]
+	abuff		[two_char]
+	abuff		[j_char]
+%endmacro
+
+%macro tp_mac 0
+	abuff		[prefix_char]
+	abuff		[open_brace_char]
+	abuff		[h_char]
+%endmacro
+
 	global		main, terminate
 	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size
 
@@ -88,10 +107,24 @@ raw_termios: istruc TERMIOS
 	at c_cc, db ""
 iend
 
-tilde:
-	db			"~", 0
-newline:
-	db			0xd, 0xa, 0
+tilde_char:
+	db			"~"
+newline_char:
+	db			0xa
+carriage_char:
+	db			0xd
+prefix_char:
+	db			`\x1b`
+open_brace_char:
+	db			"["
+two_char:
+	db			"2"
+j_char:
+	db			"J"
+h_char:
+	db			"H"
+
+
 ref_str:
 	db			`\x1b[2J`
 tp_str:
@@ -108,6 +141,8 @@ screen_rows:
 	resw		4
 screen_cols:
 	resw		4
+buff:
+	resb		255
 
 	section		.text
 
@@ -177,26 +212,34 @@ process_key:
 	je			disable_raw
 	ret
 
-draw_rows:
+refresh:
+	mov			r10, buff
+	mov			r11, 0
+
+	ref_mac
+
+	tp_mac
+
+;draw rows
 	mov			r12, 0
 	mov			r13, [screen_rows]
 draw_loop:	
-	wrt			tilde, 1
+	abuff		[tilde_char]
 	inc			r12
 
 	cmp			r12, r13
 	je			dr_cont
-	wrt			newline, 2
 
+	abuff		[carriage_char]
+	abuff		[newline_char]
 dr_cont:
 	cmp			r12, r13
 	jne			draw_loop
-	ret
+;end of draw rows
 
-refresh:
-	call		clear_screen
-	call		draw_rows
-	wrt			tp_str, 3
+	tp_mac
+
+	wrt			r10, r11
 	ret
 
 clear_screen:
