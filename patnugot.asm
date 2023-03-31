@@ -87,6 +87,12 @@
 	abuff		[ll_char]
 %endmacro
 
+%macro cl_mac 0
+	abuff		[prefix_char]
+	abuff		[open_brace_char]
+	abuff		[uk_char]
+%endmacro
+
 	global		main, terminate
 	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size
 
@@ -149,6 +155,8 @@ ll_char:
 	db			"l"
 lh_char:
 	db			"h"
+uk_char:
+	db			"K"
 
 ref_str:
 	db			`\x1b[2J`
@@ -242,7 +250,7 @@ refresh:
 	mov			r11, 0
 
 	rm_mac
-	ref_mac
+	;ref_mac
 	tp_mac
 
 ;draw rows
@@ -250,6 +258,7 @@ refresh:
 	mov			r13, [screen_rows]
 draw_loop:	
 	abuff		[tilde_char]
+	cl_mac
 	inc			r12
 
 	cmp			r12, r13
