@@ -60,13 +60,31 @@
 	abuff		[prefix_char]
 	abuff		[open_brace_char]
 	abuff		[two_char]
-	abuff		[j_char]
+	abuff		[uj_char]
 %endmacro
 
 %macro tp_mac 0
 	abuff		[prefix_char]
 	abuff		[open_brace_char]
-	abuff		[h_char]
+	abuff		[uh_char]
+%endmacro
+
+%macro sm_mac 0
+	abuff		[prefix_char]
+	abuff		[open_brace_char]
+	abuff		[qm_char]
+	abuff		[two_char]
+	abuff		[five_char]
+	abuff		[lh_char]
+%endmacro
+
+%macro rm_mac 0
+	abuff		[prefix_char]
+	abuff		[open_brace_char]
+	abuff		[qm_char]
+	abuff		[two_char]
+	abuff		[five_char]
+	abuff		[ll_char]
 %endmacro
 
 	global		main, terminate
@@ -119,11 +137,18 @@ open_brace_char:
 	db			"["
 two_char:
 	db			"2"
-j_char:
+uj_char:
 	db			"J"
-h_char:
+uh_char:
 	db			"H"
-
+qm_char:
+	db			"?"
+five_char:
+	db			"5"
+ll_char:
+	db			"l"
+lh_char:
+	db			"h"
 
 ref_str:
 	db			`\x1b[2J`
@@ -216,8 +241,8 @@ refresh:
 	mov			r10, buff
 	mov			r11, 0
 
+	rm_mac
 	ref_mac
-
 	tp_mac
 
 ;draw rows
@@ -238,6 +263,7 @@ dr_cont:
 ;end of draw rows
 
 	tp_mac
+	sm_mac
 
 	wrt			r10, r11
 	ret
