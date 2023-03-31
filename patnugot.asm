@@ -165,7 +165,10 @@ tp_str:
 ctrl_check:
 	dd			0x1f
 char_quit:
-	dd			'q'
+	dd			'q', 0
+version_text:
+	db			"Patnugot v1.0.0 by six519", 0
+version_length: 	equ			$-version_text
 
 	section		.bss
 input_char:
@@ -173,6 +176,10 @@ input_char:
 screen_rows:
 	resw		4
 screen_cols:
+	resw		4
+boundary:
+	resw		4
+loop_counter:
 	resw		4
 buff:
 	resb		255
@@ -257,7 +264,40 @@ refresh:
 	mov			r12, 0
 	mov			r13, [screen_rows]
 draw_loop:	
+	mov			r8, 3 ;divisor
+	xor			rdx, rdx
+	mov			rax, [screen_rows] ;dividend
+	idiv		r8
+
+	cmp			rax, r12
+	jne			draw_tilde
+
+;draw title
+	cmp			word [screen_cols], version_length
+	jl			rlt_label
+	mov			r14, version_length
+	jmp			check_done
+rlt_label:
+	mov			r14, [screen_cols]
+check_done:
+	mov			[boundary], r14
+	mov			r14, 0
+	mov			[loop_counter], r14
+
+check_done_loop:
+	abuff		[version_text + r14]
+	inc			word [loop_counter]
+	mov			r14, [loop_counter]
+	cmp			r14, [boundary]
+	jne			check_done_loop
+
+;end of draw title
+
+	jmp			no_tilde
+draw_tilde:
 	abuff		[tilde_char]
+
+no_tilde:
 	cl_mac
 	inc			r12
 
