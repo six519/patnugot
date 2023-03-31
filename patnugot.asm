@@ -131,6 +131,9 @@ raw_termios: istruc TERMIOS
 	at c_cc, db ""
 iend
 
+test_str:
+	db			"The value is: %d", 0xa, 0
+
 tilde_char:
 	db			"~"
 newline_char:
@@ -157,6 +160,8 @@ lh_char:
 	db			"h"
 uk_char:
 	db			"K"
+space_char:
+	db			" "
 
 ref_str:
 	db			`\x1b[2J`
@@ -180,6 +185,8 @@ screen_cols:
 boundary:
 	resw		4
 loop_counter:
+	resw		4
+padding:
 	resw		4
 buff:
 	resb		255
@@ -281,6 +288,32 @@ rlt_label:
 	mov			r14, [screen_cols]
 check_done:
 	mov			[boundary], r14
+
+	;padding code here
+	mov			r14, [screen_cols]
+	mov			[padding], r14
+	mov			r14, [boundary]
+	sub			[padding], r14
+	mov			r8, 2 ;divisor
+	xor			rdx, rdx
+	mov			rax, [padding] ;dividend
+	idiv		r8
+	mov			[padding], rax
+	cmp			rax, 0
+	jle			while_padding_check
+	abuff		[tilde_char]
+	dec			word [padding]
+while_padding_check:
+	cmp			word [padding], 0
+	jle			while_padding_end
+while_padding_loop:
+	abuff		[space_char]
+	dec			word [padding]
+	cmp			word [padding], 0
+	jne			while_padding_loop
+while_padding_end:
+	;end of padding code here
+
 	mov			r14, 0
 	mov			[loop_counter], r14
 
