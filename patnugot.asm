@@ -94,7 +94,7 @@
 %endmacro
 
 	global		main, terminate
-	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size
+	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen
 
 	section		.data
 
@@ -167,6 +167,8 @@ ref_str:
 	db			`\x1b[2J`
 tp_str:
 	db			`\x1b[H`
+cursor_str:
+	db			`\x1b[%d;%dH`
 ctrl_check:
 	dd			0x1f
 char_quit:
@@ -184,12 +186,24 @@ screen_cols:
 	resw		4
 boundary:
 	resw		4
+cursor_boundary:
+	resw		4
 loop_counter:
 	resw		4
 padding:
 	resw		4
 buff:
 	resb		255
+buff_cursor:
+	resb		32
+cursor_y:
+	resw		4
+cursor_x:
+	resw		4
+temp_cursor_y:
+	resw		4
+temp_cursor_x:
+	resw		4
 
 	section		.text
 
@@ -260,6 +274,25 @@ process_key:
 	ret
 
 refresh:
+	mov			r10, [cursor_x]
+	mov			r11, [cursor_y]
+	mov			[temp_cursor_x], r10
+	mov			[temp_cursor_y], r11
+	add			word [temp_cursor_x], 1
+	add			word [temp_cursor_y], 1
+
+	mov			rdi, buff_cursor
+	mov			rsi, 32
+	mov			rdx, cursor_str
+	mov			rcx, [temp_cursor_y]
+	mov			r8, [temp_cursor_x]
+	xor			rax, rax
+	call		snprintf
+
+	mov			rdi, buff_cursor
+	call		strlen
+	mov			[cursor_boundary], rax
+
 	mov			r10, buff
 	mov			r11, 0
 
@@ -344,7 +377,18 @@ dr_cont:
 	jne			draw_loop
 ;end of draw rows
 
-	tp_mac
+	;set cursor below
+	mov			r14, 0
+	mov			[loop_counter], r14
+
+cursor_loop:
+	abuff		[buff_cursor + r14]
+	inc			word [loop_counter]
+	mov			r14, [loop_counter]
+	cmp			r14, [cursor_boundary]
+	jne			cursor_loop
+
+	;tp_mac
 	sm_mac
 
 	wrt			r10, r11
@@ -382,6 +426,8 @@ check_ctrl_key:
 	ret
 
 init_editor:
+	mov			word [cursor_x], 0
+	mov			word [cursor_y], 0
 	call		get_window_size
 	mov			rdi, err_get_window_size
 	cmp			rax, -1
