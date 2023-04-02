@@ -173,6 +173,16 @@ ctrl_check:
 	dd			0x1f
 char_quit:
 	dd			'q', 0
+
+char_up:
+	dd			"w", 0
+char_down:
+	dd			"s", 0
+char_left:
+	dd			"a", 0
+char_right:
+	dd			"d", 0
+
 version_text:
 	db			"Patnugot v1.0.0 by six519", 0
 version_length: 	equ			$-version_text
@@ -271,6 +281,30 @@ process_key:
 	call		check_ctrl_key
 	cmp			rax, r15
 	je			disable_raw
+
+	cmp			[char_up], r15
+	je			move_up
+	cmp			[char_down], r15
+	je			move_down
+	cmp			[char_left], r15
+	je			move_left
+	cmp			[char_right], r15
+	je			move_right
+
+	jmp			move_end
+
+move_left:
+	dec			word [cursor_x]
+	jmp			move_end
+move_right:
+	inc			word [cursor_x]
+	jmp			move_end
+move_up:
+	dec			word [cursor_y]
+	jmp			move_end
+move_down:
+	inc			word [cursor_y]
+move_end:
 	ret
 
 refresh:
