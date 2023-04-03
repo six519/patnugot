@@ -175,13 +175,13 @@ char_quit:
 	dd			'q', 0
 
 char_up:
-	dd			"w", 0
+	dd			1000, 0
 char_down:
-	dd			"s", 0
+	dd			1001, 0
 char_left:
-	dd			"a", 0
+	dd			1003, 0
 char_right:
-	dd			"d", 0
+	dd			1002, 0
 
 version_text:
 	db			"Patnugot v1.0.0 by six519", 0

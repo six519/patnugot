@@ -6,7 +6,7 @@
 
 void terminate(const char *string);
 
-char read_key()
+int read_key()
 {
   int ret_size;
   char input_char;
@@ -20,10 +20,10 @@ char read_key()
     if (read(STDIN_FILENO, &seq[1], 1) != 1) return '\x1b';
     if (seq[0] == '[') {
       switch (seq[1]) {
-        case 'A': return 'w';
-        case 'B': return 's';
-        case 'C': return 'd';
-        case 'D': return 'a';
+        case 'A': return 1000;
+        case 'B': return 1001;
+        case 'C': return 1002;
+        case 'D': return 1003;
       }
     }
     return '\x1b';
