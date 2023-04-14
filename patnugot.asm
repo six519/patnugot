@@ -300,8 +300,22 @@ process_key:
 	je			move_left
 	cmp			[char_right], r15
 	je			move_right
+	cmp			[char_home], r15
+	je			move_home_key
+	cmp			[char_end], r15
+	je			move_end_key
 
 	jmp			move_end
+
+move_home_key:
+	mov			word [cursor_x], 0
+	jmp			move_end
+
+move_end_key:
+	mov			r10, [screen_cols]
+	dec			r10
+	mov			[cursor_x], r10
+	jmp			move_end	
 
 move_left:
 	cmp			word [cursor_x], 0
