@@ -304,15 +304,27 @@ process_key:
 	jmp			move_end
 
 move_left:
+	cmp			word [cursor_x], 0
+	je			move_end		
 	dec			word [cursor_x]
 	jmp			move_end
 move_right:
+	mov			r10, [screen_cols]
+	dec			r10
+	cmp			[cursor_x], r10
+	je			move_end
 	inc			word [cursor_x]
 	jmp			move_end
 move_up:
+	cmp			word [cursor_y], 0
+	je			move_end
 	dec			word [cursor_y]
 	jmp			move_end
 move_down:
+	mov			r10, [screen_rows]
+	dec			r10
+	cmp			[cursor_y], r10
+	je			move_end
 	inc			word [cursor_y]
 move_end:
 	ret
