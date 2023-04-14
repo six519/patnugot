@@ -182,6 +182,16 @@ char_left:
 	dd			1003, 0
 char_right:
 	dd			1002, 0
+char_home:
+	dd			1004, 0
+char_del:
+	dd			1005, 0
+char_end:
+	dd			1006, 0
+char_page_up:
+	dd			1007, 0
+char_page_down:
+	dd			1008, 0
 
 version_text:
 	db			"Patnugot v1.0.0 by six519", 0
