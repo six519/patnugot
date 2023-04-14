@@ -304,7 +304,21 @@ process_key:
 	je			move_home_key
 	cmp			[char_end], r15
 	je			move_end_key
+	cmp			[char_page_up], r15
+	je			move_page_up
+	cmp			[char_page_down], r15
+	je			move_page_down
 
+	jmp			move_end
+
+move_page_up:
+	mov			word [cursor_y], 0
+	jmp			move_end
+
+move_page_down:
+	mov			r10, [screen_rows]
+	dec			r10
+	mov			[cursor_y], r10
 	jmp			move_end
 
 move_home_key:
