@@ -3,8 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
+#include <string.h>
 
 void terminate(const char *string);
+
+int s_x = 0;
+int s_y = 0;
 
 int read_key()
 {
@@ -76,4 +80,27 @@ int get_size(int *screen_rows, int *screen_cols)
     *screen_rows = wsize.ws_row;
     return 0;
   }
+}
+
+void set_xy(int x, int y)
+{
+  s_x = x;
+  s_y = y;
+}
+
+int get_x()
+{
+  return s_x;
+}
+
+int get_y()
+{
+  return s_y;
+}
+
+void move_cursor()
+{
+  char cur_buff[32];
+  snprintf(cur_buff, sizeof(cur_buff), "\x1b[%d;%dH", s_y + 1, s_x+ 1);
+  write(STDOUT_FILENO, cur_buff, strlen(cur_buff));
 }

@@ -93,8 +93,9 @@
 	abuff		[uk_char]
 %endmacro
 
+	default		rel
 	global		main, terminate
-	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen
+	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor
 
 	section		.data
 
@@ -135,42 +136,42 @@ test_str:
 	db			"The value is: %d", 0xa, 0
 
 tilde_char:
-	db			"~"
+	db			"~", 0
 newline_char:
-	db			0xa
+	db			0xa, 0
 carriage_char:
-	db			0xd
+	db			0xd, 0
 prefix_char:
-	db			`\x1b`
+	db			`\x1b`, 0
 open_brace_char:
-	db			"["
+	db			"[", 0
 two_char:
-	db			"2"
+	db			"2", 0
 uj_char:
-	db			"J"
+	db			"J", 0
 uh_char:
-	db			"H"
+	db			"H", 0
 qm_char:
-	db			"?"
+	db			"?", 0
 five_char:
-	db			"5"
+	db			"5", 0
 ll_char:
-	db			"l"
+	db			"l", 0
 lh_char:
-	db			"h"
+	db			"h", 0
 uk_char:
-	db			"K"
+	db			"K", 0
 space_char:
-	db			" "
+	db			" ", 0
 
 ref_str:
-	db			`\x1b[2J`
+	db			`\x1b[2J`, 0
 tp_str:
-	db			`\x1b[H`
+	db			`\x1b[H`, 0
 cursor_str:
-	db			`\x1b[%d;%dH`
+	db			`\x1b[%d;%dH`, 0
 ctrl_check:
-	dd			0x1f
+	dd			0x1f, 0
 char_quit:
 	dd			'q', 0
 
@@ -285,6 +286,11 @@ main_loop:
 
 ;process key
 process_key:
+	call		get_x
+	mov			[cursor_x], rax
+	call		get_y
+	mov			[cursor_y], rax
+
 	call		read_key
 	mov			r15, rax
 	mov			rdi, [char_quit]
@@ -355,27 +361,12 @@ move_down:
 	je			move_end
 	inc			word [cursor_y]
 move_end:
+	mov			rdi, [cursor_x]
+	mov			rsi, [cursor_y]
+	call		set_xy
 	ret
 
 refresh:
-	mov			r10, [cursor_x]
-	mov			r11, [cursor_y]
-	mov			[temp_cursor_x], r10
-	mov			[temp_cursor_y], r11
-	add			word [temp_cursor_x], 1
-	add			word [temp_cursor_y], 1
-
-	mov			rdi, buff_cursor
-	mov			rsi, 32
-	mov			rdx, cursor_str
-	mov			rcx, [temp_cursor_y]
-	mov			r8, [temp_cursor_x]
-	xor			rax, rax
-	call		snprintf
-
-	mov			rdi, buff_cursor
-	call		strlen
-	mov			[cursor_boundary], rax
 
 	mov			r10, buff
 	mov			r11, 0
@@ -461,21 +452,11 @@ dr_cont:
 	jne			draw_loop
 ;end of draw rows
 
-	;set cursor below
-	mov			r14, 0
-	mov			[loop_counter], r14
-
-cursor_loop:
-	abuff		[buff_cursor + r14]
-	inc			word [loop_counter]
-	mov			r14, [loop_counter]
-	cmp			r14, [cursor_boundary]
-	jne			cursor_loop
-
 	;tp_mac
 	sm_mac
 
 	wrt			r10, r11
+	call		move_cursor
 	ret
 
 clear_screen:
@@ -487,6 +468,14 @@ disable_raw:
 	set_termios	orig_termios
 	call		clear_screen
 	mov			rdi, 0
+
+	call		get_x
+	mov			rsi, rax
+	print		test_str
+	call		get_y
+	mov			rsi, rax
+	print		test_str
+
 	call		exit
 
 call_terminate:
@@ -510,8 +499,11 @@ check_ctrl_key:
 	ret
 
 init_editor:
-	mov			word [cursor_x], 0
-	mov			word [cursor_y], 0
+	call		get_x
+	mov			[cursor_x], rax
+	call		get_y
+	mov			[cursor_y], rax
+
 	call		get_window_size
 	mov			rdi, err_get_window_size
 	cmp			rax, -1
