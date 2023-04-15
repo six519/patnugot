@@ -469,13 +469,6 @@ disable_raw:
 	call		clear_screen
 	mov			rdi, 0
 
-	call		get_x
-	mov			rsi, rax
-	print		test_str
-	call		get_y
-	mov			rsi, rax
-	print		test_str
-
 	call		exit
 
 call_terminate:
