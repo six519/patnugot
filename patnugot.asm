@@ -541,7 +541,10 @@ call_terminate:
 	call		terminate
 
 terminate:
+	mov			r15, rdi
+	set_termios	orig_termios
 	call		clear_screen
+	mov			rdi, r15
 	call		perror
 	mov			rdi, 1
 	call		exit
