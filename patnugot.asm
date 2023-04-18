@@ -95,7 +95,7 @@
 
 	default		rel
 	global		main, terminate
-	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor
+	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor
 
 	section		.data
 
@@ -199,6 +199,8 @@ version_text:
 version_length: 	equ			$-version_text
 
 	section		.bss
+arg_count:
+	resw		4
 input_char:
 	resb		1
 screen_rows:
@@ -229,6 +231,11 @@ temp_cursor_x:
 	section		.text
 
 main:
+	push		rdi
+	push		rsi
+	sub			rsp, 8
+	mov			[arg_count], rdi
+
 	get_termios	orig_termios
 	get_termios	raw_termios
 
@@ -277,6 +284,20 @@ main:
 	;end of enable raw mode
 
 	call		init_editor
+
+	;check cmd argument
+	cmp			word [arg_count], 2
+	jne			main_loop ;no argument
+
+	;with argument
+	add			rsp, 8
+	pop			rsi
+	pop			rdi
+	add			rsi, 8
+
+	mov			rdi, [rsi]
+	call		open_editor
+	;end with argument
 
 main_loop:
 	call		refresh

@@ -104,3 +104,7 @@ void move_cursor()
   snprintf(cur_buff, sizeof(cur_buff), "\x1b[%d;%dH", s_y + 1, s_x+ 1);
   write(STDOUT_FILENO, cur_buff, strlen(cur_buff));
 }
+
+void open_editor(char *filename)
+{
+}
