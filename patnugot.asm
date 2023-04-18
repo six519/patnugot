@@ -52,7 +52,7 @@
 
 %macro abuff 1
 	mov			r14, %1
-	mov			[r10 + r11], r14
+	mov			[buff + r11], r14
 	inc			r11
 %endmacro
 
@@ -95,7 +95,7 @@
 
 	default		rel
 	global		main, terminate
-	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor
+	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor, get_rows_count, get_row_size, get_row_chars
 
 	section		.data
 
@@ -105,7 +105,7 @@ err_tcgetattr:
 	db			"tcgetattr", 0
 err_get_window_size:
 	db			"get_window_size", 0
-test:
+test_int:
 	db			"The value is: %d", 0xa, 0
 
 struc TERMIOS
@@ -133,7 +133,7 @@ raw_termios: istruc TERMIOS
 iend
 
 test_str:
-	db			"The value is: %d", 0xa, 0
+	db			"The value is: %s", 0xa, 0
 
 tilde_char:
 	db			"~", 0
@@ -199,7 +199,7 @@ version_text:
 version_length: 	equ			$-version_text
 
 	section		.bss
-arg_count:
+temp_count:
 	resw		4
 input_char:
 	resb		1
@@ -216,7 +216,7 @@ loop_counter:
 padding:
 	resw		4
 buff:
-	resb		255
+	resq		500
 buff_cursor:
 	resb		32
 cursor_y:
@@ -234,7 +234,7 @@ main:
 	push		rdi
 	push		rsi
 	sub			rsp, 8
-	mov			[arg_count], rdi
+	mov			[temp_count], rdi
 
 	get_termios	orig_termios
 	get_termios	raw_termios
@@ -286,7 +286,7 @@ main:
 	call		init_editor
 
 	;check cmd argument
-	cmp			word [arg_count], 2
+	cmp			word [temp_count], 2
 	jne			main_loop ;no argument
 
 	;with argument
@@ -389,7 +389,7 @@ move_end:
 
 refresh:
 
-	mov			r10, buff
+	;mov			r10, buff
 	mov			r11, 0
 
 	rm_mac
@@ -399,13 +399,29 @@ refresh:
 ;draw rows
 	mov			r12, 0
 	mov			r13, [screen_rows]
-draw_loop:	
+draw_loop:
+
+	call		get_rows_count
+	cmp			r12, rax
+	jl			else_draw_rows
+
+	mov			word [temp_count], 0
+	cmp			rax, 0
+	jne			check_div
+	inc			word [temp_count]
+
+check_div:
 	mov			r8, 3 ;divisor
 	xor			rdx, rdx
 	mov			rax, [screen_rows] ;dividend
 	idiv		r8
 
 	cmp			rax, r12
+	jne			check_tilde
+	inc			word [temp_count]
+
+check_tilde:
+	cmp			word [temp_count], 2
 	jne			draw_tilde
 
 ;draw title
@@ -458,6 +474,35 @@ check_done_loop:
 	jmp			no_tilde
 draw_tilde:
 	abuff		[tilde_char]
+	jmp			no_tilde
+
+else_draw_rows:
+
+	mov			rdi, r12
+	call		get_row_size
+
+	cmp			rax, [screen_cols]
+	jle			len_less
+	mov			r14, [screen_cols]
+	mov			[boundary], r14
+	jmp			append_contents
+
+len_less:
+	mov			[boundary], rax
+
+append_contents:
+	mov			rdi, r12
+	call		get_row_chars
+
+	mov			r14, 0
+	mov			[loop_counter], r14
+
+check_done_loop_contents:
+	abuff		[rax + r14]
+	inc			word [loop_counter]
+	mov			r14, [loop_counter]
+	cmp			r14, [boundary]
+	jle			check_done_loop_contents
 
 no_tilde:
 	cl_mac
@@ -476,7 +521,7 @@ dr_cont:
 	;tp_mac
 	sm_mac
 
-	wrt			r10, r11
+	wrt			buff, r11
 	call		move_cursor
 	ret
 

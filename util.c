@@ -7,8 +7,15 @@
 
 void terminate(const char *string);
 
+typedef struct row_struct {
+  int size;
+  char *chars;
+} row_struct;
+
 int s_x = 0;
 int s_y = 0;
+int rows_count = 0;
+row_struct *rows = NULL;
 
 int read_key()
 {
@@ -107,4 +114,38 @@ void move_cursor()
 
 void open_editor(char *filename)
 {
+  FILE *file_pointer = fopen(filename, "r");
+  if (!file_pointer) terminate("fopen");
+  char *line = NULL;
+  size_t linecap = 0;
+  ssize_t length;
+  while ((length = getline(&line, &linecap, file_pointer)) != -1) {
+    while (length > 0 && (line[length - 1] == '\n' || line[length - 1] == '\r'))
+      length--;
+
+    rows = realloc(rows, sizeof(row_struct) * (rows_count + 1));
+    int index = rows_count;
+    rows[index].size = length;
+    rows[index].chars = malloc(length + 1);
+    memcpy(rows[index].chars, line, length);
+    rows[index].chars[length] = '\0';
+    rows_count++;
+  }
+  free(line);
+  fclose(file_pointer);
+}
+
+int get_rows_count()
+{
+  return rows_count;
+}
+
+int get_row_size(int index)
+{
+  return rows[index].size;
+}
+
+char *get_row_chars(int index)
+{
+  return rows[index].chars;
 }
