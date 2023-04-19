@@ -19,7 +19,7 @@
 %macro get_termios 1
 	mov			rdi, STDIN_FILENO
 	mov			rsi, %1
-	call		tcgetattr
+	call			tcgetattr
 	mov			rdi, err_tcgetattr
 	cmp			rax, -1
 	je			call_terminate
@@ -29,7 +29,7 @@
 	mov			rdi, STDIN_FILENO
 	mov			rsi, TCSAFLUSH
 	mov			rdx, %1
-	call		tcsetattr
+	call			tcsetattr
 	mov			rdi, err_tcsetattr
 	cmp			rax, -1
 	je			call_terminate
@@ -38,7 +38,7 @@
 %macro print 1
 	mov			rdi, %1
 	xor			rax, rax
-	call		printf
+	call			printf
 %endmacro
 
 %macro wrt 2
@@ -57,47 +57,47 @@
 %endmacro
 
 %macro ref_mac 0
-	abuff		[prefix_char]
-	abuff		[open_brace_char]
-	abuff		[two_char]
-	abuff		[uj_char]
+	abuff			[prefix_char]
+	abuff			[open_brace_char]
+	abuff			[two_char]
+	abuff			[uj_char]
 %endmacro
 
 %macro tp_mac 0
-	abuff		[prefix_char]
-	abuff		[open_brace_char]
-	abuff		[uh_char]
+	abuff			[prefix_char]
+	abuff			[open_brace_char]
+	abuff			[uh_char]
 %endmacro
 
 %macro sm_mac 0
-	abuff		[prefix_char]
-	abuff		[open_brace_char]
-	abuff		[qm_char]
-	abuff		[two_char]
-	abuff		[five_char]
-	abuff		[lh_char]
+	abuff			[prefix_char]
+	abuff			[open_brace_char]
+	abuff			[qm_char]
+	abuff			[two_char]
+	abuff			[five_char]
+	abuff			[lh_char]
 %endmacro
 
 %macro rm_mac 0
-	abuff		[prefix_char]
-	abuff		[open_brace_char]
-	abuff		[qm_char]
-	abuff		[two_char]
-	abuff		[five_char]
-	abuff		[ll_char]
+	abuff			[prefix_char]
+	abuff			[open_brace_char]
+	abuff			[qm_char]
+	abuff			[two_char]
+	abuff			[five_char]
+	abuff			[ll_char]
 %endmacro
 
 %macro cl_mac 0
-	abuff		[prefix_char]
-	abuff		[open_brace_char]
-	abuff		[uk_char]
+	abuff			[prefix_char]
+	abuff			[open_brace_char]
+	abuff			[uk_char]
 %endmacro
 
-	default		rel
-	global		main, terminate
-	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor, get_rows_count, get_row_size, get_row_chars
+	default			rel
+	global			main, terminate
+	extern			printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor, get_rows_count, get_row_size, get_row_chars
 
-	section		.data
+	section			.data
 
 err_tcsetattr:
 	db			"tcsetattr", 0
@@ -196,48 +196,48 @@ char_page_down:
 
 version_text:
 	db			"Patnugot v1.0.0 by six519", 0
-version_length: 	equ			$-version_text
+version_length: 		equ			$-version_text
 
-	section		.bss
+	section			.bss
 temp_count:
-	resw		4
+	resw			4
 input_char:
-	resb		1
+	resb			1
 screen_rows:
-	resw		4
+	resw			4
 screen_cols:
-	resw		4
+	resw			4
 boundary:
-	resw		4
+	resw			4
 cursor_boundary:
-	resw		4
+	resw			4
 loop_counter:
-	resw		4
+	resw			4
 padding:
-	resw		4
+	resw			4
 buff:
-	resq		500
+	resq			500
 buff_cursor:
-	resb		32
+	resb			32
 cursor_y:
-	resw		4
+	resw			4
 cursor_x:
-	resw		4
+	resw			4
 temp_cursor_y:
-	resw		4
+	resw			4
 temp_cursor_x:
-	resw		4
+	resw			4
 
-	section		.text
+	section			.text
 
 main:
-	push		rdi
-	push		rsi
+	push			rdi
+	push			rsi
 	sub			rsp, 8
 	mov			[temp_count], rdi
 
-	get_termios	orig_termios
-	get_termios	raw_termios
+	get_termios		orig_termios
+	get_termios		raw_termios
 
 	;enable raw mode
 	;set c_iflag
@@ -280,10 +280,10 @@ main:
 	mov			byte [r15 + VTIME], 1
 	mov			[raw_termios + c_cc], r15
 
-	set_termios	raw_termios
+	set_termios		raw_termios
 	;end of enable raw mode
 
-	call		init_editor
+	call			init_editor
 
 	;check cmd argument
 	cmp			word [temp_count], 2
@@ -296,26 +296,26 @@ main:
 	add			rsi, 8
 
 	mov			rdi, [rsi]
-	call		open_editor
+	call			open_editor
 	;end with argument
 
 main_loop:
-	call		refresh
-	call		process_key
+	call			refresh
+	call			process_key
 
 	jmp			main_loop
 
 ;process key
 process_key:
-	call		get_x
+	call			get_x
 	mov			[cursor_x], rax
-	call		get_y
+	call			get_y
 	mov			[cursor_y], rax
 
-	call		read_key
+	call			read_key
 	mov			r15, rax
 	mov			rdi, [char_quit]
-	call		check_ctrl_key
+	call			check_ctrl_key
 	cmp			rax, r15
 	je			disable_raw
 
@@ -384,7 +384,7 @@ move_down:
 move_end:
 	mov			rdi, [cursor_x]
 	mov			rsi, [cursor_y]
-	call		set_xy
+	call			set_xy
 	ret
 
 refresh:
@@ -401,7 +401,7 @@ refresh:
 	mov			r13, [screen_rows]
 draw_loop:
 
-	call		get_rows_count
+	call			get_rows_count
 	cmp			r12, rax
 	jl			else_draw_rows
 
@@ -414,7 +414,7 @@ check_div:
 	mov			r8, 3 ;divisor
 	xor			rdx, rdx
 	mov			rax, [screen_rows] ;dividend
-	idiv		r8
+	idiv			r8
 
 	cmp			rax, r12
 	jne			check_tilde
@@ -442,17 +442,17 @@ check_done:
 	mov			r8, 2 ;divisor
 	xor			rdx, rdx
 	mov			rax, [padding] ;dividend
-	idiv		r8
+	idiv			r8
 	mov			[padding], rax
 	cmp			rax, 0
 	jle			while_padding_check
-	abuff		[tilde_char]
+	abuff			[tilde_char]
 	dec			word [padding]
 while_padding_check:
 	cmp			word [padding], 0
 	jle			while_padding_end
 while_padding_loop:
-	abuff		[space_char]
+	abuff			[space_char]
 	dec			word [padding]
 	cmp			word [padding], 0
 	jne			while_padding_loop
@@ -463,7 +463,7 @@ while_padding_end:
 	mov			[loop_counter], r14
 
 check_done_loop:
-	abuff		[version_text + r14]
+	abuff			[version_text + r14]
 	inc			word [loop_counter]
 	mov			r14, [loop_counter]
 	cmp			r14, [boundary]
@@ -473,13 +473,13 @@ check_done_loop:
 
 	jmp			no_tilde
 draw_tilde:
-	abuff		[tilde_char]
+	abuff			[tilde_char]
 	jmp			no_tilde
 
 else_draw_rows:
 
 	mov			rdi, r12
-	call		get_row_size
+	call			get_row_size
 
 	cmp			rax, [screen_cols]
 	jle			len_less
@@ -492,13 +492,13 @@ len_less:
 
 append_contents:
 	mov			rdi, r12
-	call		get_row_chars
+	call			get_row_chars
 
 	mov			r14, 0
 	mov			[loop_counter], r14
 
 check_done_loop_contents:
-	abuff		[rax + r14]
+	abuff			[rax + r14]
 	inc			word [loop_counter]
 	mov			r14, [loop_counter]
 	cmp			r14, [boundary]
@@ -511,8 +511,8 @@ no_tilde:
 	cmp			r12, r13
 	je			dr_cont
 
-	abuff		[carriage_char]
-	abuff		[newline_char]
+	abuff			[carriage_char]
+	abuff			[newline_char]
 dr_cont:
 	cmp			r12, r13
 	jne			draw_loop
@@ -522,7 +522,7 @@ dr_cont:
 	sm_mac
 
 	wrt			buff, r11
-	call		move_cursor
+	call			move_cursor
 	ret
 
 clear_screen:
@@ -531,23 +531,23 @@ clear_screen:
 	ret
 
 disable_raw:
-	set_termios	orig_termios
-	call		clear_screen
+	set_termios		orig_termios
+	call			clear_screen
 	mov			rdi, 0
 
-	call		exit
+	call			exit
 
 call_terminate:
-	call		terminate
+	call			terminate
 
 terminate:
 	mov			r15, rdi
-	set_termios	orig_termios
-	call		clear_screen
+	set_termios		orig_termios
+	call			clear_screen
 	mov			rdi, r15
-	call		perror
+	call			perror
 	mov			rdi, 1
-	call		exit
+	call			exit
 	ret
 
 exit:
@@ -561,12 +561,12 @@ check_ctrl_key:
 	ret
 
 init_editor:
-	call		get_x
+	call			get_x
 	mov			[cursor_x], rax
-	call		get_y
+	call			get_y
 	mov			[cursor_y], rax
 
-	call		get_window_size
+	call			get_window_size
 	mov			rdi, err_get_window_size
 	cmp			rax, -1
 	je			call_terminate
@@ -575,7 +575,7 @@ init_editor:
 get_window_size:
 	mov			rdi, screen_rows
 	mov			rsi, screen_cols
-	call		get_size
+	call			get_size
 	cmp			rax, -1
 	je			gws_err
 	mov			r10, [screen_cols]
