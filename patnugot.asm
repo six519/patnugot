@@ -95,7 +95,7 @@
 
 	default		rel
 	global		main, terminate
-	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor, get_rows_count, get_row_size, get_row_chars
+	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor, get_rows_count, get_row_size, get_row_chars, get_row_offset, set_row_offset
 
 	section		.data
 
@@ -376,10 +376,10 @@ move_up:
 	dec			word [cursor_y]
 	jmp			move_end
 move_down:
-	mov			r10, [screen_rows]
-	dec			r10
+	call		get_rows_count
+	mov			r10, rax
 	cmp			[cursor_y], r10
-	je			move_end
+	jge			move_end
 	inc			word [cursor_y]
 move_end:
 	mov			rdi, [cursor_x]
@@ -388,6 +388,27 @@ move_end:
 	ret
 
 refresh:
+	mov			byte [buff + 0], 0
+
+	mov			r10, [cursor_y]
+	call		get_row_offset
+	mov			r11, rax
+
+	cmp			r10, r11
+	jge			cond_1
+	mov			rdi, r10
+	call		set_row_offset
+cond_1:
+
+	add			r11, [screen_rows]
+	cmp			r10, r11
+	jl			cond_2
+	sub			r10, [screen_rows]
+	inc			r10
+	mov			rdi, r10
+	call		set_row_offset
+
+cond_2:
 
 	;mov			r10, buff
 	mov			r11, 0
@@ -400,9 +421,12 @@ refresh:
 	mov			r12, 0
 	mov			r13, [screen_rows]
 draw_loop:
+	call		get_row_offset
+	mov			r15, rax
+	add			r15, r12
 
 	call		get_rows_count
-	cmp			r12, rax
+	cmp			r15, rax
 	jl			else_draw_rows
 
 	mov			word [temp_count], 0
@@ -478,7 +502,11 @@ draw_tilde:
 
 else_draw_rows:
 
-	mov			rdi, r12
+	call		get_row_offset
+	mov			r15, rax
+	add			r15, r12
+	
+	mov			rdi, r15
 	call		get_row_size
 
 	cmp			rax, [screen_cols]
@@ -491,7 +519,7 @@ len_less:
 	mov			[boundary], rax
 
 append_contents:
-	mov			rdi, r12
+	mov			rdi, r15
 	call		get_row_chars
 
 	mov			r14, 0

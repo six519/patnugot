@@ -15,6 +15,7 @@ typedef struct row_struct {
 int s_x = 0;
 int s_y = 0;
 int rows_count = 0;
+int row_offset = 0;
 row_struct *rows = NULL;
 
 int read_key()
@@ -108,7 +109,7 @@ int get_y()
 void move_cursor()
 {
   char cur_buff[32];
-  snprintf(cur_buff, sizeof(cur_buff), "\x1b[%d;%dH", s_y + 1, s_x+ 1);
+  snprintf(cur_buff, sizeof(cur_buff), "\x1b[%d;%dH", (s_y - row_offset) + 1, s_x + 1);
   write(STDOUT_FILENO, cur_buff, strlen(cur_buff));
 }
 
@@ -148,4 +149,14 @@ int get_row_size(int index)
 char *get_row_chars(int index)
 {
   return rows[index].chars;
+}
+
+int get_row_offset()
+{
+  return row_offset;
+}
+
+void set_row_offset(int n)
+{
+  row_offset = n;
 }
