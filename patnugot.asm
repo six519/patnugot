@@ -562,6 +562,9 @@ append_contents:
 	mov			r14, 0
 	mov			[loop_counter], r14
 
+	cmp			word [boundary], 0
+	jle			no_tilde
+
 check_done_loop_contents:
 	abuff		[rax + r14]
 	inc			word [loop_counter]
