@@ -16,6 +16,7 @@ int s_x = 0;
 int s_y = 0;
 int rows_count = 0;
 int row_offset = 0;
+int col_offset = 0;
 row_struct *rows = NULL;
 
 int read_key()
@@ -146,9 +147,9 @@ int get_row_size(int index)
   return rows[index].size;
 }
 
-char *get_row_chars(int index)
+char *get_row_chars(int index, int col_off)
 {
-  return rows[index].chars;
+  return &rows[index].chars[col_off];
 }
 
 int get_row_offset()
@@ -159,4 +160,14 @@ int get_row_offset()
 void set_row_offset(int n)
 {
   row_offset = n;
+}
+
+int get_col_offset()
+{
+  return col_offset;
+}
+
+void set_col_offset(int n)
+{
+  col_offset = n;
 }

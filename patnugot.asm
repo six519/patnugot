@@ -95,7 +95,7 @@
 
 	default		rel
 	global		main, terminate
-	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor, get_rows_count, get_row_size, get_row_chars, get_row_offset, set_row_offset
+	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor, get_rows_count, get_row_size, get_row_chars, get_row_offset, set_row_offset, get_col_offset, set_col_offset
 
 	section		.data
 
@@ -134,6 +134,8 @@ iend
 
 test_str:
 	db			"The value is: %s", 0xa, 0
+test_chr:
+	db			"The value is: %c", 0xa, 0
 
 tilde_char:
 	db			"~", 0
@@ -364,10 +366,10 @@ move_left:
 	dec			word [cursor_x]
 	jmp			move_end
 move_right:
-	mov			r10, [screen_cols]
-	dec			r10
-	cmp			[cursor_x], r10
-	je			move_end
+	;mov			r10, [screen_cols]
+	;dec			r10
+	;cmp			[cursor_x], r10
+	;je			move_end
 	inc			word [cursor_x]
 	jmp			move_end
 move_up:
@@ -409,6 +411,26 @@ cond_1:
 	call		set_row_offset
 
 cond_2:
+
+	mov			r10, [cursor_x]
+	call		get_col_offset
+	mov			r11, rax
+
+	cmp			r10, r11
+	jge			cond_3
+	mov			rdi, r10
+	call		set_col_offset
+cond_3:
+
+	add			r11, [screen_cols]
+	cmp			r10, r11
+	jl			cond_4
+	sub			r10, [screen_cols]
+	inc			r10
+	mov			rdi, r10
+	call		set_col_offset
+
+cond_4:
 
 	;mov			r10, buff
 	mov			r11, 0
@@ -505,21 +527,36 @@ else_draw_rows:
 	call		get_row_offset
 	mov			r15, rax
 	add			r15, r12
+
+	call		get_col_offset
+	mov			r10, rax
 	
 	mov			rdi, r15
 	call		get_row_size
+	sub			rax, r10
+	mov			r10, rax
 
-	cmp			rax, [screen_cols]
+	cmp			r10, 0
+	jge			dont_zero
+	mov			r10, 0
+
+dont_zero:
+
+	cmp			r10, [screen_cols]
 	jle			len_less
 	mov			r14, [screen_cols]
 	mov			[boundary], r14
 	jmp			append_contents
 
 len_less:
-	mov			[boundary], rax
+	mov			[boundary], r10
 
 append_contents:
+	call		get_col_offset
+	mov			r10, rax
+
 	mov			rdi, r15
+	mov			rsi, r10
 	call		get_row_chars
 
 	mov			r14, 0
@@ -530,7 +567,7 @@ check_done_loop_contents:
 	inc			word [loop_counter]
 	mov			r14, [loop_counter]
 	cmp			r14, [boundary]
-	jle			check_done_loop_contents
+	jl			check_done_loop_contents
 
 no_tilde:
 	cl_mac
