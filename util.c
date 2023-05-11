@@ -110,7 +110,7 @@ int get_y()
 void move_cursor()
 {
   char cur_buff[32];
-  snprintf(cur_buff, sizeof(cur_buff), "\x1b[%d;%dH", (s_y - row_offset) + 1, s_x + 1);
+  snprintf(cur_buff, sizeof(cur_buff), "\x1b[%d;%dH", (s_y - row_offset) + 1, (s_x - col_offset) + 1);
   write(STDOUT_FILENO, cur_buff, strlen(cur_buff));
 }
 

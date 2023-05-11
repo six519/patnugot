@@ -370,6 +370,19 @@ move_right:
 	;dec			r10
 	;cmp			[cursor_x], r10
 	;je			move_end
+	mov			r10, -1
+	call		get_rows_count
+	mov			r14, rax
+	cmp			[cursor_y], r14
+	jge			dont_check_right
+	mov			rdi, [cursor_y]
+	call		get_row_size
+	mov			r10, rax
+
+dont_check_right:
+
+	cmp			[cursor_x], r10
+	jge			move_end
 	inc			word [cursor_x]
 	jmp			move_end
 move_up:
