@@ -397,6 +397,27 @@ move_down:
 	jge			move_end
 	inc			word [cursor_y]
 move_end:
+
+	mov			r10, -1
+	call		get_rows_count
+	mov			r14, rax
+
+	cmp			[cursor_y], r14
+	jge			ignore_set_rowlen1
+	mov			rdi, [cursor_y]
+	call		get_row_size
+	mov			r10, rax
+ignore_set_rowlen1:
+	mov			r14, 0
+	cmp			r10, -1
+	je			ignore_set_rowlen2
+	mov			r14, r10
+ignore_set_rowlen2:
+	cmp			[cursor_x], r14
+	jle			ignore_set_rowlen3
+	mov			[cursor_x], r14
+ignore_set_rowlen3:
+
 	mov			rdi, [cursor_x]
 	mov			rsi, [cursor_y]
 	call		set_xy
