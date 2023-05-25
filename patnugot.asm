@@ -362,9 +362,18 @@ move_end_key:
 
 move_left:
 	cmp			word [cursor_x], 0
-	je			move_end		
+	je			check_zero		
 	dec			word [cursor_x]
 	jmp			move_end
+check_zero:
+	cmp			word [cursor_y], 0
+	jle			move_end
+	dec			word [cursor_y]
+	mov			rdi, [cursor_y]
+	call		get_row_size
+	mov			[cursor_x], rax
+	jmp			move_end
+
 move_right:
 	;mov			r10, [screen_cols]
 	;dec			r10
