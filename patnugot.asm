@@ -391,8 +391,15 @@ move_right:
 dont_check_right:
 
 	cmp			[cursor_x], r10
-	jge			move_end
+	jge			right_end_of_line
 	inc			word [cursor_x]
+
+right_end_of_line:
+
+	cmp			[cursor_x], r10
+	jne			move_end
+	inc			word [cursor_y]
+	mov			word [cursor_x], 0
 	jmp			move_end
 move_up:
 	cmp			word [cursor_y], 0
