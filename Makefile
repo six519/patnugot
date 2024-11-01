@@ -4,10 +4,10 @@ BIN    := patnugot
 SRC    := $(wildcard *.asm)
 OBJ    := ${SRC:%.asm=%.o}
 
-ASFLAGS += -felf64
+ASFLAGS += -felf64 -gdwarf
 
 ${BIN}: ${OBJ}
-	gcc -no-pie -o $@ $(LDFLAGS) $^ util.c
+	gcc -no-pie -g -o $@ $(LDFLAGS) $^ util.c
 
 %.o: %.asm
 	$(AS) -o $@ $(ASFLAGS) $<

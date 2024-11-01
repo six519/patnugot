@@ -252,10 +252,9 @@ main:
 	mov			rax, [rsi + 8]
 	mov			[fname], rax
 
+no_param:
 	mov			rdi, TAB_STOP
 	call		set_tab_stop
-
-no_param:
 	get_termios	orig_termios
 	get_termios	raw_termios
 
