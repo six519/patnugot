@@ -7,7 +7,7 @@ OBJ    := ${SRC:%.asm=%.o}
 ASFLAGS += -felf64
 
 ${BIN}: ${OBJ}
-	gcc -o $@ $(LDFLAGS) $^ util.c
+	gcc -no-pie -o $@ $(LDFLAGS) $^ util.c
 
 %.o: %.asm
 	$(AS) -o $@ $(ASFLAGS) $<
