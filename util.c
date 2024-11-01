@@ -5,8 +5,6 @@
 #include <sys/ioctl.h>
 #include <string.h>
 
-#define TAB_STOP 8
-
 void terminate(const char *string);
 
 typedef struct row_struct {
@@ -22,6 +20,7 @@ int rows_count = 0;
 int row_offset = 0;
 int col_offset = 0;
 row_struct *rows = NULL;
+int tab_stop = 0;
 
 int read_key()
 {
@@ -124,12 +123,12 @@ void update_row(row_struct *row) {
   for (j = 0; j < row->size; j++)
     if (row->chars[j] == '\t') tabs++;
   free(row->render);
-  row->render = malloc(row->size + tabs*(TAB_STOP - 1) + 1);
+  row->render = malloc(row->size + tabs*(tab_stop - 1) + 1);
   int idx = 0;
   for (j = 0; j < row->size; j++) {
     if (row->chars[j] == '\t') {
       row->render[idx++] = ' ';
-      while (idx % TAB_STOP != 0) row->render[idx++] = ' ';
+      while (idx % tab_stop != 0) row->render[idx++] = ' ';
     } else {
       row->render[idx++] = row->chars[j];
     }
@@ -207,4 +206,9 @@ int get_col_offset()
 void set_col_offset(int n)
 {
   col_offset = n;
+}
+
+void set_tab_stop(int tstop)
+{
+  tab_stop = tstop;
 }

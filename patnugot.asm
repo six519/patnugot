@@ -15,6 +15,7 @@
 %define IEXTEN 0x8000
 %define ISIG 0x1
 %define SYS_WRITE 1
+%define TAB_STOP 8
 
 %macro get_termios 1
 	mov			rdi, STDIN_FILENO
@@ -103,7 +104,7 @@
 
 	default		rel
 	global		main, terminate
-	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor, get_rows_count, get_row_size, get_row_rsize, get_row_chars, get_row_render, get_row_offset, set_row_offset, get_col_offset, set_col_offset
+	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor, get_rows_count, get_row_size, get_row_rsize, get_row_chars, get_row_render, get_row_offset, set_row_offset, get_col_offset, set_col_offset, set_tab_stop
 
 	section		.data
 
@@ -250,6 +251,9 @@ main:
 
 	mov			rax, [rsi + 8]
 	mov			[fname], rax
+
+	mov			rdi, TAB_STOP
+	call		set_tab_stop
 
 no_param:
 	get_termios	orig_termios
