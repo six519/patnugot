@@ -93,6 +93,14 @@
 	abuff		[uk_char]
 %endmacro
 
+%macro align_stack 0
+	sub			rsp, 8
+%endmacro
+
+%macro restore_stack 0
+	add			rsp, 8
+%endmacro
+
 	default		rel
 	global		main, terminate
 	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor, get_rows_count, get_row_size, get_row_chars, get_row_offset, set_row_offset, get_col_offset, set_col_offset
@@ -201,6 +209,8 @@ version_text:
 version_length: 	equ			$-version_text
 
 	section		.bss
+fname:
+	resq		1
 temp_count:
 	resw		4
 input_char:
@@ -233,11 +243,15 @@ temp_cursor_x:
 	section		.text
 
 main:
-	push		rdi
-	push		rsi
 	sub			rsp, 8
 	mov			[temp_count], rdi
+	cmp			word [temp_count], 2
+	jl			no_param
 
+	mov			rax, [rsi + 8]
+	mov			[fname], rax
+
+no_param:
 	get_termios	orig_termios
 	get_termios	raw_termios
 
@@ -292,18 +306,17 @@ main:
 	jne			main_loop ;no argument
 
 	;with argument
-	add			rsp, 8
-	pop			rsi
-	pop			rdi
-	add			rsi, 8
-
-	mov			rdi, [rsi]
+	mov			rdi, [fname]
 	call		open_editor
 	;end with argument
 
 main_loop:
+	align_stack
 	call		refresh
+	restore_stack
+	align_stack
 	call		process_key
+	restore_stack
 
 	jmp			main_loop
 
