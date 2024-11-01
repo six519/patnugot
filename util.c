@@ -5,11 +5,15 @@
 #include <sys/ioctl.h>
 #include <string.h>
 
+#define TAB_STOP 8
+
 void terminate(const char *string);
 
 typedef struct row_struct {
   int size;
+  int rsize;
   char *chars;
+  char *render;
 } row_struct;
 
 int s_x = 0;
@@ -114,6 +118,26 @@ void move_cursor()
   write(STDOUT_FILENO, cur_buff, strlen(cur_buff));
 }
 
+void update_row(row_struct *row) {
+  int tabs = 0;
+  int j;
+  for (j = 0; j < row->size; j++)
+    if (row->chars[j] == '\t') tabs++;
+  free(row->render);
+  row->render = malloc(row->size + tabs*(TAB_STOP - 1) + 1);
+  int idx = 0;
+  for (j = 0; j < row->size; j++) {
+    if (row->chars[j] == '\t') {
+      row->render[idx++] = ' ';
+      while (idx % TAB_STOP != 0) row->render[idx++] = ' ';
+    } else {
+      row->render[idx++] = row->chars[j];
+    }
+  }
+  row->render[idx] = '\0';
+  row->rsize = idx;
+}
+
 void open_editor(char *filename)
 {
   FILE *file_pointer = fopen(filename, "r");
@@ -131,6 +155,9 @@ void open_editor(char *filename)
     rows[index].chars = malloc(length + 1);
     memcpy(rows[index].chars, line, length);
     rows[index].chars[length] = '\0';
+    rows[index].rsize = 0;
+    rows[index].render = NULL;
+    update_row(&rows[index]);
     rows_count++;
   }
   free(line);
@@ -147,9 +174,19 @@ int get_row_size(int index)
   return rows[index].size;
 }
 
+int get_row_rsize(int index)
+{
+  return rows[index].rsize;
+}
+
 char *get_row_chars(int index, int col_off)
 {
   return &rows[index].chars[col_off];
+}
+
+char *get_row_render(int index, int col_off)
+{
+  return &rows[index].render[col_off];
 }
 
 int get_row_offset()

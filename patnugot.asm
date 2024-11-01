@@ -103,7 +103,7 @@
 
 	default		rel
 	global		main, terminate
-	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor, get_rows_count, get_row_size, get_row_chars, get_row_offset, set_row_offset, get_col_offset, set_col_offset
+	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor, get_rows_count, get_row_size, get_row_rsize, get_row_chars, get_row_render, get_row_offset, set_row_offset, get_col_offset, set_col_offset
 
 	section		.data
 
@@ -595,7 +595,7 @@ else_draw_rows:
 	mov			r10, rax
 	
 	mov			rdi, r15
-	call		get_row_size
+	call		get_row_rsize
 	sub			rax, r10
 	mov			r10, rax
 
@@ -620,7 +620,7 @@ append_contents:
 
 	mov			rdi, r15
 	mov			rsi, r10
-	call		get_row_chars
+	call		get_row_render
 
 	mov			r14, 0
 	mov			[loop_counter], r14
