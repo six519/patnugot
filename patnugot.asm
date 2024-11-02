@@ -192,6 +192,10 @@ ctrl_check:
 	dd			0x1f, 0
 char_quit:
 	dd			'q', 0
+char_save:
+	dd			's', 0
+char_refresh:
+	dd			'l', 0
 
 char_up:
 	dd			1000, 0
@@ -381,9 +385,15 @@ process_key:
 	je			del_key
 	cmp			[char_escape], r15
 	je			escape_key
-	cmp			[char_control_l], r15
+
+	mov			rdi, [char_refresh]
+	call		check_ctrl_key
+	cmp			rax, r15
 	je			control_l_key
-	cmp			[char_control_s], r15
+
+	mov			rdi, [char_save]
+	call		check_ctrl_key
+	cmp			rax, r15
 	je			control_s_key
 
 	jmp			other_key
