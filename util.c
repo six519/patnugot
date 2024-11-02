@@ -148,17 +148,18 @@ void update_row(row_struct *row) {
   row->rsize = idx;
 }
 
-void open_editor(char *filename)
+void row_insert_char(row_struct *row, int index, int c)
 {
-  FILE *file_pointer = fopen(filename, "r");
-  if (!file_pointer) terminate("fopen");
-  char *line = NULL;
-  size_t linecap = 0;
-  ssize_t length;
-  while ((length = getline(&line, &linecap, file_pointer)) != -1) {
-    while (length > 0 && (line[length - 1] == '\n' || line[length - 1] == '\r'))
-      length--;
+  if (index < 0 || index > row->size) index = row->size;
+  row->chars = realloc(row->chars, row->size + 2);
+  memmove(&row->chars[index + 1], &row->chars[index], row->size - index + 1);
+  row->size++;
+  row->chars[index] = c;
+  update_row(row);
+}
 
+void append_row(char *line, size_t length)
+{
     rows = realloc(rows, sizeof(row_struct) * (rows_count + 1));
     int index = rows_count;
     rows[index].size = length;
@@ -169,6 +170,29 @@ void open_editor(char *filename)
     rows[index].render = NULL;
     update_row(&rows[index]);
     rows_count++;
+}
+
+void insert_char(int c)
+{
+  if (s_y == rows_count)
+  {
+    append_row("", 0);
+  }
+  row_insert_char(&rows[s_y], s_x, c);
+  s_x++;
+}
+
+void open_editor(char *filename)
+{
+  FILE *file_pointer = fopen(filename, "r");
+  if (!file_pointer) terminate("fopen");
+  char *line = NULL;
+  size_t linecap = 0;
+  ssize_t length;
+  while ((length = getline(&line, &linecap, file_pointer)) != -1) {
+    while (length > 0 && (line[length - 1] == '\n' || line[length - 1] == '\r'))
+      length--;
+    append_row(line, length);
   }
   free(line);
   fclose(file_pointer);

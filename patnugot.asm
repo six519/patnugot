@@ -104,7 +104,7 @@
 
 	default		rel
 	global		main, terminate
-	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, set_rx, get_rx, move_cursor, open_editor, get_rows_count, get_row_size, get_row_rsize, get_row_chars, get_row_render, get_row_offset, set_row_offset, get_col_offset, set_col_offset, set_tab_stop, to_render
+	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, set_rx, get_rx, move_cursor, open_editor, get_rows_count, get_row_size, get_row_rsize, get_row_chars, get_row_render, get_row_offset, set_row_offset, get_col_offset, set_col_offset, set_tab_stop, to_render, insert_char
 
 	section		.data
 
@@ -354,7 +354,7 @@ process_key:
 	cmp			[char_page_down], r15
 	je			move_page_down
 
-	jmp			move_end
+	jmp			other_key
 
 move_page_up:
 
@@ -470,6 +470,12 @@ move_down:
 	cmp			[cursor_y], r10
 	jge			move_end
 	inc			word [cursor_y]
+	jmp			move_end
+
+other_key:
+	mov			rdi, r15
+	call		insert_char
+	jmp			process_key_ret
 move_end:
 
 	mov			r10, -1
@@ -495,6 +501,7 @@ ignore_set_rowlen3:
 	mov			rdi, [cursor_x]
 	mov			rsi, [cursor_y]
 	call		set_xy
+process_key_ret:
 	ret
 
 refresh:
