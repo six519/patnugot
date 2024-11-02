@@ -262,3 +262,21 @@ void to_render()
     r_x = rx;
   }
 }
+
+char *rows_to_string(int *buflen) 
+{
+  int totlen = 0;
+  int j;
+  for (j = 0; j < rows_count; j++)
+    totlen += rows[j].size + 1;
+  *buflen = totlen;
+  char *buf = malloc(totlen);
+  char *p = buf;
+  for (j = 0; j < rows_count; j++) {
+    memcpy(p, rows[j].chars, rows[j].size);
+    p += rows[j].size;
+    *p = '\n';
+    p++;
+  }
+  return buf;
+}

@@ -15,6 +15,9 @@
 %define IEXTEN 0x8000
 %define ISIG 0x1
 %define SYS_WRITE 1
+%define SYS_OPEN 2
+%define SYS_CLOSE 3
+%define SYS_FTRUNCATE 77
 %define TAB_STOP 8
 
 %macro get_termios 1
@@ -104,7 +107,7 @@
 
 	default		rel
 	global		main, terminate
-	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, set_rx, get_rx, move_cursor, open_editor, get_rows_count, get_row_size, get_row_rsize, get_row_chars, get_row_render, get_row_offset, set_row_offset, get_col_offset, set_col_offset, set_tab_stop, to_render, insert_char
+	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, set_rx, get_rx, move_cursor, open_editor, get_rows_count, get_row_size, get_row_rsize, get_row_chars, get_row_render, get_row_offset, set_row_offset, get_col_offset, set_col_offset, set_tab_stop, to_render, insert_char, rows_to_string, free
 
 	section		.data
 
@@ -116,6 +119,10 @@ err_get_window_size:
 	db			"get_window_size", 0
 test_int:
 	db			"The value is: %d", 0xa, 0
+file_flags:
+	dq			0x41 ; O_RDWR | O_CREAT
+file_mode:
+	dq			0x180 ; 0644
 
 struc TERMIOS
 	c_iflag: resd 1
@@ -212,12 +219,17 @@ char_escape:
 	dd			27, 0
 char_control_l:
 	dd			12, 0
+char_control_s:
+	dd			19, 0
 
 version_text:
 	db			"Patnugot v1.0.0 by six519", 0
 version_length: 	equ			$-version_text
 
 	section		.bss
+
+row_str_len:
+	resq		1
 fname:
 	resq		1
 temp_count:
@@ -371,8 +383,16 @@ process_key:
 	je			escape_key
 	cmp			[char_control_l], r15
 	je			control_l_key
+	cmp			[char_control_s], r15
+	je			control_s_key
 
 	jmp			other_key
+
+control_s_key:
+	call		save_file
+	cmp			rax, 1
+	je			disable_raw
+	jmp			process_key_ret
 
 control_l_key:
 	; do nothing
@@ -815,4 +835,47 @@ gws_err:
 gws_ok:
 	mov			rax, 0
 gws_end:
+	ret
+
+save_file:
+	mov			rax, [fname]
+	test		rax, rax
+	jz			set_return_to_zero
+
+	mov			rdi, row_str_len
+	call		rows_to_string
+	mov			rbx, rax
+
+	mov			rdi, [fname]
+	mov			rsi, [file_flags]
+	mov			rdx, [file_mode]
+	mov			rax, SYS_OPEN
+	syscall
+	mov			r8, rax
+
+	mov			rdi, r8
+	mov			rsi, [row_str_len]
+	mov			rax, SYS_FTRUNCATE
+	syscall
+
+	; write to file
+	mov			rdi, r8
+	mov			rsi, rbx
+	mov			rdx, [row_str_len]
+	mov			rax, SYS_WRITE
+	syscall
+
+	; close file and free buffer
+	mov			rdi, r8
+	mov			rax, SYS_CLOSE
+	syscall
+
+	mov			rdi, rbx
+	call		free
+	mov			rax, 1
+	jmp			save_file_return
+
+set_return_to_zero:
+	mov			rax, 0
+save_file_return:
 	ret
