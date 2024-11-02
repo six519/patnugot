@@ -104,7 +104,7 @@
 
 	default		rel
 	global		main, terminate
-	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, move_cursor, open_editor, get_rows_count, get_row_size, get_row_rsize, get_row_chars, get_row_render, get_row_offset, set_row_offset, get_col_offset, set_col_offset, set_tab_stop
+	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, set_rx, get_rx, move_cursor, open_editor, get_rows_count, get_row_size, get_row_rsize, get_row_chars, get_row_render, get_row_offset, set_row_offset, get_col_offset, set_col_offset, set_tab_stop, to_render
 
 	section		.data
 
@@ -458,6 +458,10 @@ ignore_set_rowlen3:
 refresh:
 	mov			byte [buff + 0], 0
 
+	mov			rdi, 0
+	call		set_rx
+	call		to_render
+
 	mov			r10, [cursor_y]
 	call		get_row_offset
 	mov			r11, rax
@@ -478,7 +482,8 @@ cond_1:
 
 cond_2:
 
-	mov			r10, [cursor_x]
+	call		get_rx
+	mov			r10, rax
 	call		get_col_offset
 	mov			r11, rax
 

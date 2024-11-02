@@ -16,6 +16,7 @@ typedef struct row_struct {
 
 int s_x = 0;
 int s_y = 0;
+int r_x = 0;
 int rows_count = 0;
 int row_offset = 0;
 int col_offset = 0;
@@ -110,10 +111,20 @@ int get_y()
   return s_y;
 }
 
+void set_rx(int x)
+{
+  r_x = x;
+}
+
+int get_rx()
+{
+  return r_x;
+}
+
 void move_cursor()
 {
   char cur_buff[32];
-  snprintf(cur_buff, sizeof(cur_buff), "\x1b[%d;%dH", (s_y - row_offset) + 1, (s_x - col_offset) + 1);
+  snprintf(cur_buff, sizeof(cur_buff), "\x1b[%d;%dH", (s_y - row_offset) + 1, (r_x - col_offset) + 1);
   write(STDOUT_FILENO, cur_buff, strlen(cur_buff));
 }
 
@@ -211,4 +222,19 @@ void set_col_offset(int n)
 void set_tab_stop(int tstop)
 {
   tab_stop = tstop;
+}
+
+void to_render()
+{
+  if (s_y < rows_count)
+  {
+    int rx = 0;
+    int j;
+    for (j = 0; j < s_x; j++) {
+      if (rows[s_y].chars[j] == '\t')
+        rx += (tab_stop - 1) - (rx % tab_stop);
+      rx++;
+    }
+    r_x = rx;
+  }
 }
