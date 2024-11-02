@@ -357,13 +357,47 @@ process_key:
 	jmp			move_end
 
 move_page_up:
-	mov			word [cursor_y], 0
+
+	call		get_row_offset
+	mov			[cursor_y], rax
+
+pg_up:
+	mov			r8, [screen_rows]
+	mov			r9, 0
+pg_up_loop:
+	; editor move cursor
+	cmp			word [cursor_y], 0
+	je			move_end
+	dec			word [cursor_y]
+	inc			r9
+	cmp			r8, r9
+	jne			pg_up_loop
 	jmp			move_end
 
 move_page_down:
-	mov			r10, [screen_rows]
-	dec			r10
-	mov			[cursor_y], r10
+
+	call		get_row_offset
+	add			rax, [screen_rows]
+	dec			rax
+	mov			[cursor_y], rax
+	call		get_rows_count
+	cmp			[cursor_y], rax
+	jle			pg_down
+	mov			[cursor_y], rax
+
+pg_down:
+	mov			r8, [screen_rows]
+	mov			r9, 0
+pg_down_loop:
+	; editor move cursor
+	call		get_rows_count
+	mov			r10, rax
+	cmp			[cursor_y], r10
+	jge			move_end
+	inc			word [cursor_y]
+	inc			r9
+	cmp			r8, r9
+	jne			pg_down_loop
 	jmp			move_end
 
 move_home_key:
