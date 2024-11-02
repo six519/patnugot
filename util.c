@@ -289,10 +289,36 @@ void rows_del_char(row_struct *row, int index)
   update_row(row);
 }
 
-void del_char() {
+void rows_append_string(row_struct *row, char *s, size_t len) 
+{
+  row->chars = realloc(row->chars, row->size + len + 1);
+  memcpy(&row->chars[row->size], s, len);
+  row->size += len;
+  row->chars[row->size] = '\0';
+  update_row(row);
+}
+
+void del_row(int index) 
+{
+  if (index < 0 || index >= rows_count) return;
+  free(rows[index].render);
+  free(rows[index].chars);
+  memmove(&rows[index], &rows[index + 1], sizeof(row_struct) * (rows_count - index - 1));
+  rows_count--;
+}
+
+void del_char() 
+{
   if (s_y == rows_count) return;
+  if (s_x == 0 && s_y == 0) return;
+
   if (s_x > 0) {
     rows_del_char(&rows[s_y], s_x - 1);
     s_x--;
+  } else {
+    s_x = rows[s_y - 1].size;
+    rows_append_string(&rows[s_y - 1], rows[s_y].chars, rows[s_y].size);
+    del_row(s_y);
+    s_y--;
   }
 }
