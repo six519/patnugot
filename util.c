@@ -280,3 +280,19 @@ char *rows_to_string(int *buflen)
   }
   return buf;
 }
+
+void rows_del_char(row_struct *row, int index)
+{
+  if (index < 0 || index >= row->size) return;
+  memmove(&row->chars[index], &row->chars[index + 1], row->size - index);
+  row->size--;
+  update_row(row);
+}
+
+void del_char() {
+  if (s_y == rows_count) return;
+  if (s_x > 0) {
+    rows_del_char(&rows[s_y], s_x - 1);
+    s_x--;
+  }
+}

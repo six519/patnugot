@@ -107,7 +107,7 @@
 
 	default		rel
 	global		main, terminate
-	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, set_rx, get_rx, move_cursor, open_editor, get_rows_count, get_row_size, get_row_rsize, get_row_chars, get_row_render, get_row_offset, set_row_offset, get_col_offset, set_col_offset, set_tab_stop, to_render, insert_char, rows_to_string, free
+	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, set_rx, get_rx, move_cursor, open_editor, get_rows_count, get_row_size, get_row_rsize, get_row_chars, get_row_render, get_row_offset, set_row_offset, get_col_offset, set_col_offset, set_tab_stop, to_render, insert_char, rows_to_string, free, del_char
 
 	section		.data
 
@@ -404,6 +404,7 @@ escape_key:
 
 backspace_key:
 	; handle backspace
+	call		del_char
 	jmp			process_key_ret
 
 enter_key:
@@ -412,6 +413,49 @@ enter_key:
 
 del_key:
 	; handle del key
+	mov			r10, -1
+	call		get_rows_count
+	mov			r14, rax
+	cmp			[cursor_y], r14
+	jge			del_key_dont_check_right
+	mov			rdi, [cursor_y]
+	call		get_row_size
+	mov			r10, rax
+del_key_dont_check_right:
+	cmp			[cursor_x], r10
+	jge			del_key_right_end_of_line
+	inc			word [cursor_x]
+del_key_right_end_of_line:
+	cmp			[cursor_x], r10
+	jne			del_key_move_end
+	inc			word [cursor_y]
+	mov			word [cursor_x], 0
+	jmp			del_key_move_end
+del_key_move_end:
+	mov			r10, -1
+	call		get_rows_count
+	mov			r14, rax
+	cmp			[cursor_y], r14
+	jge			del_key_ignore_set_rowlen1
+	mov			rdi, [cursor_y]
+	call		get_row_size
+	mov			r10, rax
+del_key_ignore_set_rowlen1:
+	mov			r14, 0
+	cmp			r10, -1
+	je			del_key_ignore_set_rowlen2
+	mov			r14, r10
+del_key_ignore_set_rowlen2:
+	cmp			[cursor_x], r14
+	jle			del_key_ignore_set_rowlen3
+	mov			[cursor_x], r14
+del_key_ignore_set_rowlen3:
+
+	mov			rdi, [cursor_x]
+	mov			rsi, [cursor_y]
+	call		set_xy
+	
+	call		del_char
 	jmp			process_key_ret
 
 move_page_up:
