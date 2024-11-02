@@ -229,7 +229,7 @@ loop_counter:
 padding:
 	resw		4
 buff:
-	resq		500
+	resb		1048576 ; 1 MB buffer
 buff_cursor:
 	resb		32
 cursor_y:
