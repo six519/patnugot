@@ -204,6 +204,14 @@ char_page_up:
 	dd			1007, 0
 char_page_down:
 	dd			1008, 0
+char_backspace:
+	dd			127, 0
+char_enter:
+	dd			13, 0
+char_escape:
+	dd			27, 0
+char_control_l:
+	dd			12, 0
 
 version_text:
 	db			"Patnugot v1.0.0 by six519", 0
@@ -353,8 +361,38 @@ process_key:
 	je			move_page_up
 	cmp			[char_page_down], r15
 	je			move_page_down
+	cmp			[char_backspace], r15
+	je			backspace_key
+	cmp			[char_enter], r15
+	je			enter_key
+	cmp			[char_del], r15
+	je			del_key
+	cmp			[char_escape], r15
+	je			escape_key
+	cmp			[char_control_l], r15
+	je			control_l_key
 
 	jmp			other_key
+
+control_l_key:
+	; do nothing
+	jmp			process_key_ret
+
+escape_key:
+	; do nothing
+	jmp			process_key_ret
+
+backspace_key:
+	; handle backspace
+	jmp			process_key_ret
+
+enter_key:
+	; handle enter
+	jmp			process_key_ret
+
+del_key:
+	; handle del key
+	jmp			process_key_ret
 
 move_page_up:
 
