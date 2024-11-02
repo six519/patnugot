@@ -405,10 +405,18 @@ move_home_key:
 	jmp			move_end
 
 move_end_key:
-	mov			r10, [screen_cols]
-	dec			r10
-	mov			[cursor_x], r10
-	jmp			move_end	
+	;mov			r10, [screen_cols]
+	;dec			r10
+	;mov			[cursor_x], r10
+	;jmp			move_end
+
+	call		get_rows_count
+	cmp			[cursor_y], rax
+	jge			move_end
+	mov			rdi, [cursor_y]
+	call		get_row_size
+	mov			[cursor_x], rax
+	jmp			move_end
 
 move_left:
 	cmp			word [cursor_x], 0
