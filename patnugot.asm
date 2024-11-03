@@ -20,13 +20,18 @@
 %define SYS_FTRUNCATE 77
 %define TAB_STOP 8
 
+%macro terminate_without_termios 1
+	call		clear_screen
+	mov			rdi, %1
+	call		perror
+	mov			rdi, 1
+	call		exit
+%endmacro
+
 %macro get_termios 1
 	mov			rdi, STDIN_FILENO
 	mov			rsi, %1
 	call		tcgetattr
-	mov			rdi, err_tcgetattr
-	cmp			rax, -1
-	je			call_terminate
 %endmacro
 
 %macro set_termios 1
@@ -34,9 +39,16 @@
 	mov			rsi, TCSAFLUSH
 	mov			rdx, %1
 	call		tcsetattr
-	mov			rdi, err_tcsetattr
-	cmp			rax, -1
-	je			call_terminate
+%endmacro
+
+%macro terminate_with_termios 1
+	set_termios	orig_termios
+	call		clear_screen
+	mov			rdi, %1
+	call		perror
+	mov			rdi, 1
+	call		exit
+	ret
 %endmacro
 
 %macro print 1
@@ -106,7 +118,7 @@
 %endmacro
 
 	default		rel
-	global		main, terminate
+	global		main
 	extern		printf, perror, tcsetattr, tcgetattr, iscntrl, read_key, get_size, snprintf, strlen, set_xy, get_x, get_y, set_rx, get_rx, move_cursor, open_editor, get_rows_count, get_row_size, get_row_rsize, get_row_chars, get_row_render, get_row_offset, set_row_offset, get_col_offset, set_col_offset, set_tab_stop, to_render, insert_char, rows_to_string, free, del_char, insert_newline
 
 	section		.data
@@ -117,6 +129,10 @@ err_tcgetattr:
 	db			"tcgetattr", 0
 err_get_window_size:
 	db			"get_window_size", 0
+err_fopen:
+	db			"fopen", 0
+err_read_key:
+	db			"read_key", 0
 test_int:
 	db			"The value is: %d", 0xa, 0
 file_flags:
@@ -280,8 +296,17 @@ no_param:
 	mov			rdi, TAB_STOP
 	call		set_tab_stop
 	get_termios	orig_termios
-	get_termios	raw_termios
+	cmp			rax, -1
+	jne			main_get_termios
+	terminate_without_termios err_tcgetattr
 
+main_get_termios:
+	get_termios	raw_termios
+	cmp			rax, -1
+	jne			main_enable_raw_mode
+	terminate_without_termios err_tcgetattr
+
+main_enable_raw_mode:
 	;enable raw mode
 	;set c_iflag
 	mov			r15, BRKINT
@@ -325,7 +350,11 @@ no_param:
 
 	set_termios	raw_termios
 	;end of enable raw mode
+	cmp			rax, -1
+	jne			main_init_editor
+	terminate_without_termios	err_tcsetattr
 
+main_init_editor:
 	call		init_editor
 
 	;check cmd argument
@@ -335,6 +364,9 @@ no_param:
 	;with argument
 	mov			rdi, [fname]
 	call		open_editor
+	cmp			rax, 6519
+	jne			main_loop
+	terminate_with_termios	err_fopen
 	;end with argument
 
 main_loop:
@@ -355,6 +387,11 @@ process_key:
 	mov			[cursor_y], rax
 
 	call		read_key
+	cmp			rax, 6519
+	jne			process_key_continue
+	terminate_with_termios	err_read_key
+
+process_key_continue:
 	mov			r15, rax
 	mov			rdi, [char_quit]
 	call		check_ctrl_key
@@ -840,19 +877,6 @@ disable_raw:
 
 	call		exit
 
-call_terminate:
-	call		terminate
-
-terminate:
-	mov			r15, rdi
-	set_termios	orig_termios
-	call		clear_screen
-	mov			rdi, r15
-	call		perror
-	mov			rdi, 1
-	call		exit
-	ret
-
 exit:
 	mov			rax, 0x3c
 	syscall
@@ -870,9 +894,10 @@ init_editor:
 	mov			[cursor_y], rax
 
 	call		get_window_size
-	mov			rdi, err_get_window_size
 	cmp			rax, -1
-	je			call_terminate
+	jne			init_editor_return
+	terminate_with_termios	err_get_window_size
+init_editor_return:
 	ret
 
 get_window_size:

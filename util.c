@@ -5,8 +5,6 @@
 #include <sys/ioctl.h>
 #include <string.h>
 
-void terminate(const char *string);
-
 typedef struct row_struct {
   int size;
   int rsize;
@@ -38,7 +36,7 @@ int read_key()
   char input_char;
   while ((ret_size = read(STDIN_FILENO, &input_char, 1)) != 1)
   {
-    if (ret_size == -1 && errno != EAGAIN) terminate("read_key");
+    if (ret_size == -1 && errno != EAGAIN) return 6519;
   }
   if (input_char == '\x1b') {
     char seq[3];
@@ -183,10 +181,10 @@ void insert_char(int c)
   s_x++;
 }
 
-void open_editor(char *filename)
+int open_editor(char *filename)
 {
   FILE *file_pointer = fopen(filename, "r");
-  if (!file_pointer) terminate("fopen");
+  if (!file_pointer) return 6519;
   char *line = NULL;
   size_t linecap = 0;
   ssize_t length;
@@ -197,6 +195,7 @@ void open_editor(char *filename)
   }
   free(line);
   fclose(file_pointer);
+  return 0;
 }
 
 int get_rows_count()
