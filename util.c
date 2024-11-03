@@ -158,25 +158,26 @@ void row_insert_char(row_struct *row, int index, int c)
   update_row(row);
 }
 
-void append_row(char *line, size_t length)
+void insert_row(int index, char *line, size_t length)
 {
-    rows = realloc(rows, sizeof(row_struct) * (rows_count + 1));
-    int index = rows_count;
-    rows[index].size = length;
-    rows[index].chars = malloc(length + 1);
-    memcpy(rows[index].chars, line, length);
-    rows[index].chars[length] = '\0';
-    rows[index].rsize = 0;
-    rows[index].render = NULL;
-    update_row(&rows[index]);
-    rows_count++;
+  if (index < 0 || index > rows_count) return;
+  rows = realloc(rows, sizeof(row_struct) * (rows_count + 1));
+  memmove(&rows[index + 1], &rows[index], sizeof(row_struct) * (rows_count - index));
+  rows[index].size = length;
+  rows[index].chars = malloc(length + 1);
+  memcpy(rows[index].chars, line, length);
+  rows[index].chars[length] = '\0';
+  rows[index].rsize = 0;
+  rows[index].render = NULL;
+  update_row(&rows[index]);
+  rows_count++;
 }
 
 void insert_char(int c)
 {
   if (s_y == rows_count)
   {
-    append_row("", 0);
+    insert_row(rows_count, "", 0);
   }
   row_insert_char(&rows[s_y], s_x, c);
   s_x++;
@@ -192,7 +193,7 @@ void open_editor(char *filename)
   while ((length = getline(&line, &linecap, file_pointer)) != -1) {
     while (length > 0 && (line[length - 1] == '\n' || line[length - 1] == '\r'))
       length--;
-    append_row(line, length);
+    insert_row(rows_count, line, length);
   }
   free(line);
   fclose(file_pointer);
@@ -321,4 +322,19 @@ void del_char()
     del_row(s_y);
     s_y--;
   }
+}
+
+void insert_newline() {
+  if (s_x == 0) {
+    insert_row(s_y, "", 0);
+  } else {
+    row_struct *row = &rows[s_y];
+    insert_row(s_y + 1, &row->chars[s_x], row->size - s_x);
+    row = &rows[s_y];
+    row->size = s_x;
+    row->chars[row->size] = '\0';
+    update_row(row);
+  }
+  s_y++;
+  s_x = 0;
 }
