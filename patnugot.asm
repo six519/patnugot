@@ -431,6 +431,7 @@ del_key:
 	mov			rdi, [cursor_y]
 	call		get_row_size
 	mov			r10, rax
+	inc			r10 ; NOT SURE IF THIS IS A PERMANET FIX!
 del_key_dont_check_right:
 	cmp			[cursor_x], r10
 	jge			del_key_right_end_of_line
@@ -557,6 +558,7 @@ move_right:
 	mov			rdi, [cursor_y]
 	call		get_row_size
 	mov			r10, rax
+	inc			r10 ; NOT SURE IF THIS IS A PERMANET FIX!
 
 dont_check_right:
 
