@@ -1,6 +1,6 @@
 # Patnugot
 
-A text editor for x64 Linux, written in assembly language and inspired by the [Kilo]https://github.com/antirez/kilo project.
+A text editor for x64 Linux, written in assembly language and inspired by the [Kilo](https://github.com/antirez/kilo) project.
 
 ## Dependencies
 
